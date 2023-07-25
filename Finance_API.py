@@ -1,53 +1,37 @@
 from flask import Flask,jsonify
-import mysql.connector
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 
-db = mysql.connector.connect(
-    host='localhost',
-    user='root',
-    password='Talha1234',
-    database='finance'
-)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:Talha1234@localhost/finance'
+db = SQLAlchemy(app)
 
-def execute_query(query):
-    cursor = db.cursor()
-    cursor.execute(query)
-    result = cursor.fetchall()
-    cursor.close()
-    return result
-
+class finance_data(db.Model):
+    Id = db.Column(db.Integer, primary_key=True)
+    Symbol = db.Column(db.String(50))
+    Name = db.Column(db.String(200))
+    URL = db.Column(db.String(500))
+    Last_Price = db.Column(db.String(50))
+    Change_ = db.Column(db.String(50))
+    Percentage_Change = db.Column(db.String(50))
 
 # Endpoint to get all books from the database
 @app.route('/api/finance', methods=['GET'])
 def get_all_data():
-    query = 'SELECT * FROM finance_data;'
-    result = execute_query(query)
+    result = finance_data.query.all()
     Finance_data = []
     for row in result:
         data = {
-            'id': row[0],
-            'symbol': row[1],
-            'name': row[2],
-            'url': row[3],
-            'last_price': row[4],
-            'change_': row[5],
-            'percentage_change': row[6]
+            'id': row.Id,
+            'symbol': row.Symbol,
+            'name': row.Name,
+            'url': row.URL,
+            'last_price': row.Last_Price,
+            'change_': row.Change_,
+            'percentage_change': row.Percentage_Change
         }
         Finance_data.append(data)
     return jsonify(Finance_data)
-
-# # Endpoint to get a specific book by its ID from the database
-# @app.route('/api/books/<int:Id>', methods=['GET'])
-# def get_book_by_id(Id):
-#     cursor = get_db_connection()
-#     cursor.execute('SELECT * FROM finance_data WHERE id = ?', (Id,))
-#     row = cursor.fetchone()
-#     cursor.close()
-#     if row:
-#         return jsonify(dict(row))
-#     else:
-#         return jsonify({'message': 'Book not found'}), 404
 
 if __name__ == "__main__":
     app.run(debug=True)
