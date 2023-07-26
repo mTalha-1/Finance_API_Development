@@ -3,15 +3,18 @@ from flask import Flask,jsonify,request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import inspect
 from Scraping_Yahoo_Finance import Scraping_Data
+import datetime
 
 logging.basicConfig(filename='app.log', filemode='w',level=logging.INFO, format= '%(asctime)s - %(levelname)s - %(message)s - %(lineno)d')
 
 app = Flask(__name__)
 
+#MySQL Database connection using SQLALCHEMY
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root:Talha1234@localhost/finance'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+#This is a model class of finance_data table in database
 class finance_data(db.Model):
     Id = db.Column(db.Integer, primary_key=True)
     Symbol = db.Column(db.String(50))
@@ -20,8 +23,12 @@ class finance_data(db.Model):
     Last_Price = db.Column(db.String(50))
     Change_ = db.Column(db.String(50))
     Percentage_Change = db.Column(db.String(50))
+    Timestamp = db.Column(db.DateTime)
 
 def create_or_recreate_table():
+    '''This function is for table creation in database, it will check if the table is not exist then create it.
+    And if table exist first it will drop the table and then create the table
+    '''
     with app.app_context():
         try:
             insp = inspect(db.engine)
@@ -44,7 +51,8 @@ def fetch_data_and_store():
                 URL=item['URL'],
                 Last_Price=item['Last_Price'],
                 Change_=item['Change_'],
-                Percentage_Change=item['Percentage_Change']
+                Percentage_Change=item['Percentage_Change'],
+                Timestamp = item['TimeStamp']
             )
             db.session.add(finance_item)
 
@@ -68,7 +76,8 @@ def get_all_data():
                 'url': row.URL,
                 'last_price': row.Last_Price,
                 'change_': row.Change_,
-                'percentage_change': row.Percentage_Change
+                'percentage_change': row.Percentage_Change,
+                'Timestamp': row.Timestamp
             }
             Finance_data.append(data)
         return jsonify(Finance_data)
@@ -90,7 +99,8 @@ def get_specific_record(record_id):
             'URL': record.URL,
             'Last_Price': record.Last_Price,
             'Change_': record.Change_,
-            'Percentage_Change': record.Percentage_Change
+            'Percentage_Change': record.Percentage_Change,
+            'Timestamp': record.Timestamp
         }
         return jsonify(data)
     except Exception as e:
@@ -106,7 +116,8 @@ def add_data():
             URL=request.json['url'],
             Last_Price=request.json['last_price'],
             Change_=request.json['change_'],
-            Percentage_Change=request.json['percentage_change'])
+            Percentage_Change=request.json['percentage_change'],
+            Timestamp = request.json['timestamp'])
         db.session.add(data)
         db.session.commit()
         return {'id': data.Id}
@@ -130,6 +141,7 @@ def update_record(record_id):
         record.Last_Price = request.json['last_price']
         record.Change_ = request.json['change_']
         record.Percentage_Change = request.json['percentage_change']
+        record.Timestamp = request.json['timestamp']
 
         db.session.commit()
         return jsonify({'message': 'Record updated successfully'})
@@ -153,5 +165,6 @@ def delete_record(record_id):
     except Exception as e:
         logging.error(f"Error deleting record: {str(e)}")
         return jsonify({'error': 'Something went wrong.'}), 500
+    
 if __name__ == "__main__":
     app.run()

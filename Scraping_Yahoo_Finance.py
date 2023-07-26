@@ -1,7 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.common.exceptions import NoSuchElementException
-
+import datetime
 import logging
 
 logging.basicConfig(filename='app.log', filemode='w',level=logging.INFO, format= '%(asctime)s - %(levelname)s - %(message)s - %(lineno)d')
@@ -65,6 +65,8 @@ def Scraping_Data():
     except NoSuchElementException as e:
         logging.debug(e)
 
+    ct = datetime.datetime.now()
+
     data = []
     try:  
         for i,(symbol,name,last_price,change,per_change) in enumerate(zip(Symbols,names,Last_Prices,changes,per_changes)):
@@ -76,7 +78,8 @@ def Scraping_Data():
                 'URL':  symbol.get_attribute('href'),
                 'Last_Price': last_price.text,
                 'Change_': change.text,
-                'Percentage_Change': per_change.text
+                'Percentage_Change': per_change.text,
+                'TimeStamp' : ct
             })
     except Exception as e:
         logging.critical(e)
