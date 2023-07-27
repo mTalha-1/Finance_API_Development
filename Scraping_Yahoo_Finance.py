@@ -65,13 +65,13 @@ def Scraping_Data():
     except NoSuchElementException as e:
         logging.debug(e)
 
-    ct = datetime.datetime.now()
 
     data = []
     try:  
         for i,(symbol,name,last_price,change,per_change) in enumerate(zip(Symbols,names,Last_Prices,changes,per_changes)):
             print('Inserting row: ',i+1)
 
+            ct = datetime.datetime.now()    
             data.append({
                 'Symbol': symbol.text,
                 'Name': name.text,
